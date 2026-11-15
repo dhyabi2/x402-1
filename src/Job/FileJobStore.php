@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Quebracho\X402\Job;
 
+use Quebracho\X402\Field;
+
 /**
  * Jobs for one host: `<id>.json` per job, and `<sha256(settlementKey)>.key` holding its id. Every write
  * holds a flock on `.lock` and goes through a rename, so a reader never sees half a job and two writers
@@ -37,7 +39,7 @@ final class FileJobStore implements JobStore
     public function get(string $id): ?Job
     {
         // The id names a file: anything but our own hex is not a job (and not a path).
-        if (!preg_match('/^[0-9a-f]{32}$/', $id)) {
+        if (!Field::is(Field::JOB_ID, $id)) {
             return null;
         }
         $raw = @file_get_contents($this->path($id));

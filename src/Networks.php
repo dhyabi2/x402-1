@@ -168,7 +168,7 @@ final class Networks
 
     private static function isSolanaAddress(string $s): bool
     {
-        return 1 === preg_match('/^[1-9A-HJ-NP-Za-km-z]{32,44}$/', $s);
+        return Field::is(Field::BASE58, $s);
     }
 
     /**
@@ -213,7 +213,7 @@ final class Networks
      */
     public static function add(int $chainId, string $asset, string $name, string $version, int $decimals = 6, string $label = '', string $rpc = '', string $explorer = '', ?string $blacklist = null): string
     {
-        if ($chainId <= 0 || !preg_match('/^0x[0-9a-fA-F]{40}$/', $asset)) {
+        if ($chainId <= 0 || !Field::is(Field::ADDRESS, $asset)) {
             throw new \InvalidArgumentException('A chain id is positive and a token address is 0x followed by 40 hex characters.');
         }
         if (null !== $blacklist && !isset(TokenBlacklist::FUNCTIONS[$blacklist])) {
@@ -339,7 +339,7 @@ final class Networks
      */
     public static function atomic(string $usd, int $decimals): string
     {
-        if (!preg_match('/^(\d+)(?:\.(\d{1,'.$decimals.'}))?$/', $usd, $m)) {
+        if (!preg_match('/^(\d+)(?:\.(\d{1,'.$decimals.'}))?\z/', $usd, $m)) {
             throw new \InvalidArgumentException("Not a price with at most $decimals decimals: $usd.");
         }
         $atomic = gmp_init(ltrim($m[1].str_pad($m[2] ?? '', $decimals, '0'), '0') ?: '0', 10);

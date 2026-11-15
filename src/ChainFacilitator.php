@@ -45,7 +45,7 @@ final class ChainFacilitator implements Facilitator
         private readonly int $pollDelayMs = 500,
         private readonly int $pollAttempts = 40,
     ) {
-        if (!preg_match('/^eip155:[1-9]\d*$/', $network)) {
+        if (!Field::is(Field::EVM_NETWORK, $network)) {
             throw new \InvalidArgumentException("Not an EVM network: $network");
         }
     }
@@ -199,16 +199,18 @@ final class ChainFacilitator implements Facilitator
         $auth = $payment['payload']['authorization'] ?? [];
         $signature = $payment['payload']['signature'] ?? null;
         // ponytail: EOA signatures only (r ‖ s ‖ v); smart wallets (ERC-1271) need the bytes overload.
-        if (!is_array($auth) || !is_string($signature) || !preg_match('/^0x[0-9a-fA-F]{130}$/', $signature)) {
+        if (!is_array($auth) || !is_string($signature) || !Field::is(Field::SIGNATURE, $signature)) {
             throw new InvalidPaymentException('The signature is not 65 bytes.');
         }
-        $patterns = ['from' => '/^0x[0-9a-fA-F]{40}$/', 'to' => '/^0x[0-9a-fA-F]{40}$/', 'value' => '/^(0|[1-9]\d*)$/', 'validAfter' => '/^(0|[1-9]\d*)$/', 'validBefore' => '/^(0|[1-9]\d*)$/', 'nonce' => '/^0x[0-9a-fA-F]{64}$/'];
+        // In the order the token takes them. Each in its one spelling (Field): the words below are built from them.
+        $rules = ['from' => Field::ADDRESS, 'to' => Field::ADDRESS, 'value' => Field::UINT256, 'validAfter' => Field::UINT256, 'validBefore' => Field::UINT256, 'nonce' => Field::BYTES32];
+        $bad = Field::first($rules, $auth);
+        if (null !== $bad) {
+            throw new InvalidPaymentException("The authorization's $bad is malformed.");
+        }
         $words = [];
-        foreach ($patterns as $field => $pattern) {
-            $value = $auth[$field] ?? null;
-            if (!is_string($value) || !preg_match($pattern, $value)) {
-                throw new InvalidPaymentException("The authorization's $field is malformed.");
-            }
+        foreach (array_keys($rules) as $field) {
+            $value = $auth[$field];
             $words[] = str_starts_with($value, '0x') ? Rpc::word($value) : Rpc::word(gmp_strval(gmp_init($value, 10), 16));
         }
         $v = hexdec(substr($signature, 130, 2));

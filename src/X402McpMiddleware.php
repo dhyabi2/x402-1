@@ -161,9 +161,8 @@ final class X402McpMiddleware implements MiddlewareInterface
             return $this->required($id, $accepts, $resource, 'Payment required to access this resource');
         }
         // The offer the buyer says it took, among ours: never its own copy.
-        $accepted = $payment['accepted'] ?? [];
-        $req = current(array_filter($accepts, fn (array $a) => $a['scheme'] === ($accepted['scheme'] ?? null) && $a['network'] === ($accepted['network'] ?? null)));
-        if (false === $req) {
+        $req = Settlement::offer($accepts, $payment['accepted'] ?? null, $this->schemes);
+        if (null === $req) {
             return $this->required($id, $accepts, $resource, 'invalid_payment_requirements');
         }
         $payer = null !== $this->payer ? fn (string $from): ?string => ($this->payer)($params, $from) : null;

@@ -1,5 +1,23 @@
 # Upgrading
 
+## From 0.5.0 to 0.5.1
+
+Nothing is removed and no parameter moves. Two fixes, and one class:
+
+- **`Field`: one spelling per value, checked whole.** The format checks used a PCRE `$`, which also matches
+  before a final newline: a payment whose `nonce` or `from` ended in `\n` reached the EIP-712 encoder and
+  threw (an unhandled exception, a 500, that anybody could cause without funds), and one whose
+  `validAfter`, `validBefore` or signature did passed as valid. Every such check now goes through
+  `Field::is($rule, $value)` (address, bytes32, signature, uint256, amount, timestamp, payment id…), which
+  takes a string and nothing around it. Refused now, where it passed before: any of those values with a
+  trailing newline, **a private key read from a file with its final newline included** (`new Signer()`
+  throws: trim it), and a price such as `"0.01\n"`. `EvmExact::verify()` answers
+  `invalid_payment_requirements` for an offer whose `asset` or `payTo` is no address, instead of throwing.
+  Use `Field` in a scheme of your own (docs/extending.md).
+- **Two tokens on one network.** The middlewares found the offer a payment took by scheme and network
+  alone, so with two offers on one network they always took the first and refused whoever paid the second.
+  `Settlement::offer()` now matches the asset too. With one offer per network, nothing changes.
+
 ## From 0.4 to 0.5
 
 Nothing is removed and no parameter moves (`tests/CompatibilityTest.php`, against 0.3.0 and 0.4.1). Two

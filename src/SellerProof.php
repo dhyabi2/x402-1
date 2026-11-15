@@ -48,7 +48,7 @@ final class SellerProof
      */
     public static function header(Signer $seller, string $purpose, string $method, string $body, string $network, ?string $nonce = null, ?int $issuedAt = null): string
     {
-        if (!preg_match('/^eip155:(\d+)$/', $network, $m)) {
+        if (!preg_match('/^eip155:(\d+)\z/', $network, $m)) {
             throw new \InvalidArgumentException("Not an EVM network: $network.");
         }
         $nonce ??= '0x'.bin2hex(random_bytes(32));

@@ -22,7 +22,7 @@ final class Signer
 
     public function __construct(#[\SensitiveParameter] string $privateKey)
     {
-        if (!preg_match('/^0x[0-9a-fA-F]{64}$/', $privateKey)) {
+        if (!Field::is(Field::PRIVATE_KEY, $privateKey)) {
             throw new \InvalidArgumentException('A private key is 0x followed by 64 hex characters.');
         }
         $this->key = strtolower(substr($privateKey, 2));
@@ -46,7 +46,7 @@ final class Signer
      */
     public static function recover(string $digest, string $signature): ?string
     {
-        if (!preg_match('/^0x([0-9a-fA-F]{64})([0-9a-fA-F]{64})([0-9a-fA-F]{2})$/', $signature, $m)) {
+        if (!preg_match('/^0x([0-9a-fA-F]{64})([0-9a-fA-F]{64})([0-9a-fA-F]{2})\z/', $signature, $m)) {
             return null;
         }
         $generator = CurveFactory::getGeneratorByName(SecgCurve::NAME_SECP_256K1);

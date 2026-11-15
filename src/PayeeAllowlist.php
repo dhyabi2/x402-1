@@ -52,6 +52,6 @@ final class PayeeAllowlist
 
     private static function normalize(string $address): string
     {
-        return preg_match('/^0x[0-9a-fA-F]{40}$/', $address) ? strtolower($address) : $address;
+        return Field::is(Field::ADDRESS, $address) ? strtolower($address) : $address;
     }
 }

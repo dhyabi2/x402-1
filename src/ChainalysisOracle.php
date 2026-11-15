@@ -43,7 +43,7 @@ final class ChainalysisOracle
 
     public function __invoke(AddressCheck $check): void
     {
-        if (!preg_match('/^0x[0-9a-fA-F]{40}$/', $check->address)) {
+        if (!Field::is(Field::ADDRESS, $check->address)) {
             return;
         }
         $address = $check->address;
@@ -87,7 +87,7 @@ final class ChainalysisOracle
             throw new \RuntimeException('ChainalysisOracle: no RPC endpoint.');
         }
         $answer = (new Rpc($this->http, $this->requests, $this->streams, $rpc))('eth_call', [['to' => self::CONTRACT, 'data' => self::SELECTOR.Rpc::word($address)], 'latest']);
-        if (!\is_string($answer) || !preg_match('/^0x[0-9a-fA-F]{64}$/', $answer)) {
+        if (!\is_string($answer) || !Field::is(Field::BYTES32, $answer)) {
             throw new \UnexpectedValueException('isSanctioned: not a bool');
         }
 

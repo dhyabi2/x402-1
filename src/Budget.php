@@ -94,7 +94,7 @@ final class Budget
     {
         $network = $req['network'] ?? null;
         $cap = is_string($network) ? $this->caps[$network] ?? null : null;
-        if (null === $cap || !is_string($req['amount'] ?? null) || !preg_match('/^[1-9][0-9]{0,77}$/', $req['amount'])) {
+        if (null === $cap || !is_string($req['amount'] ?? null) || !Field::is(Field::AMOUNT, $req['amount'])) {
             return false;
         }
         $timeout = $req['maxTimeoutSeconds'] ?? null;
