@@ -144,7 +144,7 @@ final class SolanaExact implements Scheme, SpendsOnce, AddressForm, VetsOffers
             $keys[$mint] !== $req['asset'] => 'invalid_exact_svm_payload_mint_mismatch',
             $keys[$destination] !== Solana::ata($req['payTo'], $req['asset'], $token) => 'invalid_exact_svm_payload_recipient_mismatch',
             // The amount is u64; overpaying is tolerated (§1.4), underpaying is not.
-            !preg_match('/^[1-9]\d*$/', (string) $req['amount']) || 0 > gmp_cmp(self::u64($transfers[0]['data'], 1), (string) $req['amount']) => 'invalid_exact_svm_payload_amount_insufficient',
+            !Field::is(Field::AMOUNT, (string) $req['amount']) || 0 > gmp_cmp(self::u64($transfers[0]['data'], 1), (string) $req['amount']) => 'invalid_exact_svm_payload_amount_insufficient',
             null !== $decimals && ord($transfers[0]['data'][9]) !== $decimals => 'invalid_exact_svm_payload_transaction_instructions',
             // The buyer is the second signer, the transfer's authority, and signed this message.
             1 !== $authority || $keys[$source] !== Solana::ata($keys[1], $req['asset'], $token) => 'invalid_exact_svm_payload_transaction_signers',
@@ -177,7 +177,7 @@ final class SolanaExact implements Scheme, SpendsOnce, AddressForm, VetsOffers
 
     public function valid(string $address): bool
     {
-        return 1 === preg_match('/^[1-9A-HJ-NP-Za-km-z]{32,44}$/', $address);
+        return Field::is(Field::BASE58, $address);
     }
 
     public function spell(string $address): string

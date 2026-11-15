@@ -108,7 +108,7 @@ final class HttpFacilitator implements Facilitator
     public function pollSettle(array $out, array $payment, array $req, int $attempts, int $delaySeconds): array
     {
         $id = $out['extensions']['settlement-status']['paymentId'] ?? null;
-        for ($i = 0; true !== ($out['success'] ?? null) && is_string($id) && preg_match('/^[\w-]+$/', $id) && $i < $attempts; ++$i) {
+        for ($i = 0; true !== ($out['success'] ?? null) && is_string($id) && Field::is(Field::PAYMENT_ID, $id) && $i < $attempts; ++$i) {
             if ($i > 0) {
                 sleep($delaySeconds);
             }
@@ -154,7 +154,7 @@ final class HttpFacilitator implements Facilitator
         }
         $tx = $out['transaction'] ?? null;
         $from = $payment['payload']['authorization']['from'] ?? null;
-        $consistent = is_string($tx) && (str_starts_with($req['network'], 'eip155:') ? 1 === preg_match('/^0x[0-9a-fA-F]{64}$/', $tx) : '' !== $tx)
+        $consistent = is_string($tx) && (str_starts_with($req['network'], 'eip155:') ? Field::is(Field::BYTES32, $tx) : '' !== $tx)
             && ($out['network'] ?? null) === $req['network']
             && (!isset($out['payer'], $from) || 0 === strcasecmp((string) $out['payer'], (string) $from));
 

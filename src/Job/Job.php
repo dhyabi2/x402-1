@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Quebracho\X402\Job;
 
+use Quebracho\X402\Field;
+
 /**
  * One paid job (job mode, docs/job-mode.md): the deposit, the work, and the paid delivery of its result.
  * A long work is sold in two payments: a `_start` tool takes the deposit (upfront) and queues the work, a
@@ -209,6 +211,6 @@ final class Job
 
     private static function normalize(string $payer): string
     {
-        return preg_match('/^0x[0-9a-fA-F]{40}$/', $payer) ? strtolower($payer) : $payer;
+        return Field::is(Field::ADDRESS, $payer) ? strtolower($payer) : $payer;
     }
 }

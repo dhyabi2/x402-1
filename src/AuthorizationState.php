@@ -36,12 +36,12 @@ final class AuthorizationState
      */
     public function __invoke(string $network, string $from, string $nonce): bool
     {
-        if (!preg_match('/^0x[0-9a-fA-F]{40}$/', $from) || !preg_match('/^0x[0-9a-fA-F]{64}$/', $nonce)) {
+        if (!Field::is(Field::ADDRESS, $from) || !Field::is(Field::BYTES32, $nonce)) {
             throw new \InvalidArgumentException('Not an EIP-3009 from/nonce.');
         }
         $token = Networks::get($network);
         $result = (new Rpc($this->http, $this->requests, $this->streams, $token['rpc']))('eth_call', [['to' => $token['asset'], 'data' => self::SELECTOR.Rpc::word($from).substr($nonce, 2)], 'latest']);
-        if (!\is_string($result) || !preg_match('/^0x[0-9a-fA-F]{64}$/', $result)) {
+        if (!\is_string($result) || !Field::is(Field::BYTES32, $result)) {
             throw new \UnexpectedValueException('authorizationState did not answer a bool word.');
         }
 

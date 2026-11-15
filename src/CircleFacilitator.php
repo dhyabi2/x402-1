@@ -67,7 +67,7 @@ final class CircleFacilitator implements Facilitator, PaymentStatus
      */
     public function status(string $paymentId, string $network): array
     {
-        if (1 !== preg_match('/^[\w-]+$/', $paymentId)) {
+        if (!Field::is(Field::PAYMENT_ID, $paymentId)) {
             throw new \InvalidArgumentException("Not a paymentId: $paymentId");
         }
 

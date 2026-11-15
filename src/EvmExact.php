@@ -14,6 +14,9 @@ final class EvmExact implements Scheme, SpendsOnce, Expires, AddressForm, VetsOf
     /** Seconds a signature must still be valid for when it is settled, so it does not expire on its way into a block. */
     public const int SLACK = 6;
 
+    /** An EIP-3009 authorization's fields, each in its one spelling (Field): anything else is invalid_payload. */
+    private const array AUTHORIZATION = ['from' => Field::ADDRESS, 'to' => Field::ADDRESS, 'nonce' => Field::BYTES32, 'value' => Field::UINT256, 'validAfter' => Field::TIMESTAMP, 'validBefore' => Field::TIMESTAMP];
+
     /**
      * @param ?Signer                      $buyer
      *                                            Needed to pay; a seller that only verifies passes none
@@ -57,7 +60,9 @@ final class EvmExact implements Scheme, SpendsOnce, Expires, AddressForm, VetsOf
             ($accepted['network'] ?? null) !== $req['network'] => 'invalid_network',
             empty($req['extra']['name']) || empty($req['extra']['version']) => 'invalid_payment_requirements',
             // An offer that charges nothing (zero, empty, not a plain integer) is not a sale; Networks::requirements already refuses it.
-            !preg_match('/^[1-9][0-9]*$/', (string) ($req['amount'] ?? '')) => 'invalid_payment_requirements',
+            !Field::is(Field::AMOUNT, (string) ($req['amount'] ?? '')) => 'invalid_payment_requirements',
+            // Our own offer names a token and a seller the encoder can read: a bad one is our mistake, not the buyer's.
+            !Field::is(Field::ADDRESS, $req['asset'] ?? null) || !Field::is(Field::ADDRESS, $req['payTo'] ?? null) => 'invalid_payment_requirements',
             // The buyer echoes the offer it took; a different echo is not that offer.
             0 !== strcasecmp((string) ($accepted['asset'] ?? ''), $req['asset'])
               || 0 !== strcasecmp((string) ($accepted['payTo'] ?? ''), $req['payTo'])
@@ -76,14 +81,7 @@ final class EvmExact implements Scheme, SpendsOnce, Expires, AddressForm, VetsOf
 
     private static function canonical(array $auth, string $signature): bool
     {
-        $formats = ['from' => '/^0x[0-9a-fA-F]{40}$/', 'to' => '/^0x[0-9a-fA-F]{40}$/', 'nonce' => '/^0x[0-9a-fA-F]{64}$/', 'value' => '/^(0|[1-9][0-9]{0,77})$/', 'validAfter' => '/^(0|[1-9][0-9]{0,18})$/', 'validBefore' => '/^(0|[1-9][0-9]{0,18})$/'];
-        foreach ($formats as $key => $format) {
-            if (!is_string($auth[$key] ?? null) || !preg_match($format, $auth[$key])) {
-                return false;
-            }
-        }
-
-        return (bool) preg_match('/^0x[0-9a-fA-F]{130}$/', $signature);
+        return null === Field::first(self::AUTHORIZATION, $auth) && Field::is(Field::SIGNATURE, $signature);
     }
 
     public function payer(array $payment): ?string
@@ -118,7 +116,7 @@ final class EvmExact implements Scheme, SpendsOnce, Expires, AddressForm, VetsOf
 
     public function valid(string $address): bool
     {
-        return 1 === preg_match('/^0x[0-9a-fA-F]{40}$/', $address);
+        return Field::is(Field::ADDRESS, $address);
     }
 
     public function spell(string $address): string

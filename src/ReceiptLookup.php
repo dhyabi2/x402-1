@@ -70,7 +70,7 @@ final class ReceiptLookup
      */
     private function evm(string $network, string $transaction, array $receipt, array $payment, array $req): ?array
     {
-        if (1 !== preg_match('/^0x[0-9a-fA-F]{64}$/', $transaction)) {
+        if (!Field::is(Field::BYTES32, $transaction)) {
             return null;
         }
         $rpc = new Rpc($this->http, $this->requests, $this->streams, Networks::get($network)['rpc']);

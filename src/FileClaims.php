@@ -38,7 +38,7 @@ final class FileClaims
      */
     public function release(string $key): void
     {
-        if (preg_match('/^[0-9a-f]{64}$/', $key)) {
+        if (Field::is(Field::HASH, $key)) {
             @unlink($this->dir.'/'.$key);
         }
     }

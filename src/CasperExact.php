@@ -244,7 +244,7 @@ final class CasperExact implements Scheme, SpendsOnce, Expires, AddressForm, Sha
      */
     public static function isAddress(string $s): bool
     {
-        return 1 === preg_match('/^00[0-9a-f]{64}$/', $s);
+        return 1 === preg_match('/^00[0-9a-f]{64}\z/', $s);
     }
 
     /**
@@ -260,19 +260,19 @@ final class CasperExact implements Scheme, SpendsOnce, Expires, AddressForm, Sha
      */
     public static function isPackageHash(string $s): bool
     {
-        return 1 === preg_match('/^[0-9a-f]{64}$/', $s);
+        return Field::is(Field::HASH, $s);
     }
 
     private static function canonical(array $auth, string $signature, string $publicKey): bool
     {
-        $formats = ['from' => '/^00[0-9a-f]{64}$/', 'to' => '/^00[0-9a-f]{64}$/', 'nonce' => '/^[0-9a-f]{64}$/', 'value' => '/^(0|[1-9][0-9]{0,77})$/', 'validAfter' => '/^(0|[1-9][0-9]{0,18})$/', 'validBefore' => '/^(0|[1-9][0-9]{0,18})$/'];
+        $formats = ['from' => '/^00[0-9a-f]{64}\z/', 'to' => '/^00[0-9a-f]{64}\z/', 'nonce' => '/^[0-9a-f]{64}\z/', 'value' => '/^(0|[1-9][0-9]{0,77})\z/', 'validAfter' => '/^(0|[1-9][0-9]{0,18})\z/', 'validBefore' => '/^(0|[1-9][0-9]{0,18})\z/'];
         foreach ($formats as $key => $format) {
             if (!is_string($auth[$key] ?? null) || !preg_match($format, $auth[$key])) {
                 return false;
             }
         }
 
-        return preg_match('/^01[0-9a-f]{64}$/', $publicKey) && preg_match('/^01[0-9a-f]{128}$/', $signature);
+        return preg_match('/^01[0-9a-f]{64}\z/', $publicKey) && preg_match('/^01[0-9a-f]{128}\z/', $signature);
     }
 
     private static function bytes32(string $hex): string
@@ -287,7 +287,7 @@ final class CasperExact implements Scheme, SpendsOnce, Expires, AddressForm, Sha
      */
     private static function fitsUint256(string $decimal): bool
     {
-        if (1 !== preg_match('/^[1-9][0-9]{0,77}$/', $decimal)) {
+        if (!Field::is(Field::AMOUNT, $decimal)) {
             return false;
         }
 

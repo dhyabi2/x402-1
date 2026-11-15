@@ -132,9 +132,8 @@ final class X402Middleware implements MiddlewareInterface
         }
 
         // The offer the buyer says it took, among ours: never its own copy.
-        $accepted = $payment['accepted'] ?? [];
-        $req = current(array_filter($accepts, fn (array $a) => $a['scheme'] === ($accepted['scheme'] ?? null) && $a['network'] === ($accepted['network'] ?? null)));
-        if (false === $req) {
+        $req = Settlement::offer($accepts, $payment['accepted'] ?? null, $this->schemes);
+        if (null === $req) {
             return $this->required($accepts, $resource, 'The payment matches none of the accepted offers');
         }
         $sale = $this->sale($payment, $req);

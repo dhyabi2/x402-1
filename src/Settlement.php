@@ -58,6 +58,42 @@ final class Settlement
     }
 
     /**
+     * The seller's own offer the buyer says it took (the payment's `accepted`), or NULL when it is none of them.
+     * Always one of $accepts, never the buyer's copy: `accepted` only says which one.
+     *
+     * Found by scheme and network; when the seller offers several on one network (two tokens), by the asset
+     * too, compared as the network's scheme spells addresses (AddressForm: EVM hex in any case, base58
+     * exactly). A payment that names an asset the seller does not offer there gets the first offer of that
+     * network, whose verify then refuses it.
+     *
+     * @param list<array<string, mixed>> $accepts  the seller's offers for this request
+     * @param mixed                      $accepted the payment's `accepted`, as the buyer sent it
+     * @param iterable<Scheme>           $schemes  the seller's own schemes, asked before the library's
+     *
+     * @return ?array<string, mixed>
+     */
+    public static function offer(array $accepts, mixed $accepted, iterable $schemes = []): ?array
+    {
+        $accepted = \is_array($accepted) ? $accepted : [];
+        $same = array_values(array_filter($accepts, static fn (array $a): bool => $a['scheme'] === ($accepted['scheme'] ?? null) && $a['network'] === ($accepted['network'] ?? null)));
+        if ([] === $same) {
+            return null;
+        }
+        $asset = $accepted['asset'] ?? null;
+        if (\count($same) > 1 && \is_string($asset)) {
+            $form = Schemes::find((string) $same[0]['network'], $schemes, AddressForm::class);
+            foreach ($same as $offer) {
+                $own = $offer['asset'] ?? null;
+                if (\is_string($own) && (null !== $form ? $form->same($own, $asset) : $own === $asset)) {
+                    return $offer;
+                }
+            }
+        }
+
+        return $same[0];
+    }
+
+    /**
      * Mock mode, opted into by name: signatures are verified for real, nothing
      * moves on chain. The receipt has no transaction and says `mock`.
      */

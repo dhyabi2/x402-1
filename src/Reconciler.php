@@ -137,7 +137,7 @@ final class Reconciler
     private function event(Rpc $rpc, string $asset, string $from, string $nonce): ?string
     {
         $latest = $rpc('eth_blockNumber', []);
-        if (!\is_string($latest) || 1 !== preg_match('/^0x[0-9a-fA-F]+$/', $latest)) {
+        if (!\is_string($latest) || 1 !== preg_match('/^0x[0-9a-fA-F]+\z/', $latest)) {
             throw new \UnexpectedValueException('eth_blockNumber did not answer a number');
         }
         $start = gmp_sub(Rpc::number($latest), self::LOG_BLOCKS);
@@ -206,6 +206,6 @@ final class Reconciler
      */
     private static function hex(mixed $value, int $digits): bool
     {
-        return \is_string($value) && 1 === preg_match('/^0x[0-9a-fA-F]{'.$digits.'}$/', $value);
+        return \is_string($value) && 1 === preg_match('/^0x[0-9a-fA-F]{'.$digits.'}\z/', $value);
     }
 }
